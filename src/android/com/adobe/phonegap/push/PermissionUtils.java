@@ -29,10 +29,10 @@ public class PermissionUtils {
             appOpsClass = Class.forName("android.app.AppOpsManager");
 
             Method checkOpNoThrowMethod = appOpsClass.getMethod(
-                CHECK_OP_NO_THROW,
-                Integer.TYPE,
-                Integer.TYPE,
-                String.class
+                    CHECK_OP_NO_THROW,
+                    Integer.TYPE,
+                    Integer.TYPE,
+                    String.class
             );
 
             Field opValue = appOpsClass.getDeclaredField(appOpsServiceId);

@@ -6,8 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.support.v4.app.RemoteInput;
+import android.util.Log;
 
 
 public class PushHandlerActivity extends Activity implements PushConstants {
@@ -27,7 +27,7 @@ public class PushHandlerActivity extends Activity implements PushConstants {
 
         int notId = intent.getExtras().getInt(NOT_ID, 0);
         Log.d(LOG_TAG, "not id = " + notId);
-        gcm.setNotification(notId, "");
+        NotificationHandlerUtil.setNotification(notId, "");
         super.onCreate(savedInstanceState);
         Log.v(LOG_TAG, "onCreate");
         String callback = getIntent().getExtras().getString("callback");
@@ -37,15 +37,15 @@ public class PushHandlerActivity extends Activity implements PushConstants {
         boolean dismissed = getIntent().getExtras().getBoolean(DISMISSED, false);
         Log.d(LOG_TAG, "dismissed = " + dismissed);
 
-        if(!startOnBackground){
+        if (!startOnBackground) {
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            notificationManager.cancel(FCMService.getAppName(this), notId);
+            notificationManager.cancel(NotificationHandlerUtil.getAppName(this), notId);
         }
 
         boolean isPushPluginActive = PushPlugin.isActive();
         boolean inline = processPushBundle(isPushPluginActive, intent);
 
-        if(inline && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N && !startOnBackground){
+        if (inline && android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.N && !startOnBackground) {
             foreground = true;
         }
 
@@ -53,12 +53,12 @@ public class PushHandlerActivity extends Activity implements PushConstants {
 
         finish();
 
-        if(!dismissed) {
+        if (!dismissed) {
             Log.d(LOG_TAG, "isPushPluginActive = " + isPushPluginActive);
             if (!isPushPluginActive && foreground && inline) {
                 Log.d(LOG_TAG, "forceMainActivityReload");
                 forceMainActivityReload(false);
-            } else if(startOnBackground) {
+            } else if (startOnBackground) {
                 Log.d(LOG_TAG, "startOnBackgroundTrue");
                 forceMainActivityReload(true);
             } else {

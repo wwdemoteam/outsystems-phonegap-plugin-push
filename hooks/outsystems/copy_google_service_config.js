@@ -1,10 +1,22 @@
+/**
+ * copy_google_service_config.js
+ * Plugin hook to deal specifically with the FCM license files (Google-Info.plist/google-service.json) (icons, sound) 
+ * on the OutSystems platform. 
+ *
+ * @license MIT
+ * @version 1.0
+ * @author  João Gonçalves, joao.goncalves@outsystems.com
+ * @updated 29/09/2017
+ * @link    www.outsystems.com
+ *
+ */
 module.exports = function (ctx) {
     var Q = ctx.requireCordovaModule("q");
     var fs = ctx.requireCordovaModule("fs");
     var path = ctx.requireCordovaModule("path");
     var CordovaError = ctx.requireCordovaModule("cordova-common").CordovaError;
     var deferral = Q.defer();
-
+    
     // Android path: platforms/android/assets/www
     // iOS path: platforms/ios/www/
     var projectRoot = ctx.opts.projectRoot;

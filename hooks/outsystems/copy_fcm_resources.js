@@ -128,7 +128,7 @@ module.exports = function (ctx) {
     if (!prefZipFilename) {
       console.log("Aborting FCM resources handling. Reason: FCMResourcesFile preference not set.");
       defer.resolve();
-      return;
+      return defer;
     }
 
     var resourcesFolder = getResourcesFolder(context);
@@ -139,7 +139,7 @@ module.exports = function (ctx) {
     if (!zipFile)  {
       console.log("Aborting FCM resources handling. Reason: Resources zip file not found.");
       defer.resolve();
-      return;
+      return defer;
     }
 
     var unzipedResourcesDir = unzip(zipFile, resourcesFolder, prefZipFilename);
@@ -149,19 +149,23 @@ module.exports = function (ctx) {
       if (!hasResources) {
         console.log("Aborting FCM resources handling for android. Reason: No resources found or empty zip file.");
         defer.resolve();
-        return;
+        return defer;
       }
     } catch (err) {
       if (err.code === "ENOENT") {
         console.log("Aborting FCM resources handling for android. Reason: No resources found.");
         defer.resolve();
-        return;
+        return defer;
       }
     }
 
-    handleAndroidIcons(androidFolder, prefIconName, icon_preferences_values, unzipedResourcesDir);
-
-    defer.resolve();
+    var handleIconsPromiseRes = handleAndroidIcons(androidFolder, prefIconName, icon_preferences_values, unzipedResourcesDir);
+    handleIconsPromiseRes.then(function (resolve, reject) {
+      shell.rm('-rf', unzipedResourcesDir);
+      shell.rm('-f', zipFile);
+      return true;
+    });
+    defer.resolve(handleIconsPromiseRes);
     return defer.promise;
   }
 
@@ -174,30 +178,32 @@ module.exports = function (ctx) {
    * @param {String} unzipedResourcesDir 
    */
   function handleAndroidIcons(androidFolder, prefIconName, icon_preferences_values, unzipedResourcesDir) {
+    var defer = Q.defer();
     // jppg: prerequisites: prefIconName has to be set otherwise we 
     // can't copy to target directories correctly
     if (!prefIconName) {
       console.log("Aborting FCM resources handling for android. Reason: FCMIconName preference value not set.");
       defer.resolve();
-      return;
+      return defer.promise;
     }
 
     // Android only allows for resource names that match [a-z0-9_]
     if (prefIconName.match(/[^a-z0-9_]/)) {
       defer.reject(new CordovaError("Invalid value set for FCMIconName. The name must only match [a-z0-9_]"));
-      return;
+      return defer.promise;
     }
 
     // for each notification icon set on the preference
     // copy the file into the appropriate android res/drawble folder
 
-    var keys = Object.keys(icon_preferences_values);
-    keys.forEach(function (key)  {
+    var copyFn = function (key) {
+      var defer = Q.defer();
       if (icon_preferences_values.hasOwnProperty(key)) {
         console.log("Handling: " + key + " - " + icon_preferences_values[key] + "\n");
         // ignore preferences without value
         if (!icon_preferences_values[key]) {
-          return;
+          defer.resolve();
+          return defer.promise;
         }
 
 
@@ -207,7 +213,8 @@ module.exports = function (ctx) {
 
         // ignore files that aren't either png, jpg ou jpeg.
         if (!extension.match(/\.(png|jpg|jpeg)$/)) {
-          return;
+          defer.resolve();
+          return defer.promise;
         }
         if (origIconPath) {
 
@@ -216,7 +223,8 @@ module.exports = function (ctx) {
             // The original file doesn't exist, ignore it!
             if (err) {
               console.log("FCM Resources: Failed to copy '" + icon_preferences_values[key] + "' for " + android_preference_icon_name[key] + ". The file doesn't exist on the resources.\n");
-              return;
+              defer.resolve();
+              return defer.promise;
             }
 
             var targetDir = path.resolve(androidFolder, android_res_paths[key]);
@@ -227,11 +235,21 @@ module.exports = function (ctx) {
                 shell.mkdir("-p", targetDir);
               }
               shell.cp('-f', origIconPath, destFile);
+              defer.resolve();
             });
           });
         }
+
       }
-    });
+      return defer.promise;
+    };
+    
+    var keys = Object.keys(icon_preferences_values);
+    var copyPromises = keys.map(copyFn);
+    var allCopiedPromise = Q.all(copyPromises);
+    defer.resolve(allCopiedPromise);
+    return defer.promise;
+
   }
 
   /**

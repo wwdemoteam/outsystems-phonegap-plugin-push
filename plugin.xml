@@ -12,6 +12,7 @@
         <clobbers target="PushNotification" />
     </js-module>
     <hook type="before_plugin_install" src="hooks/outsystems/install_prerequisites.js" />
+    <hook type="before_plugin_install" src="hooks/outsystems/unzip_google_service_config.js" />
     <hook type="before_plugin_install" src="hooks/outsystems/copy_google_service_config.js" />
     <hook type="before_plugin_install" src="hooks/outsystems/copy_fcm_resources.js" />
     <engines>

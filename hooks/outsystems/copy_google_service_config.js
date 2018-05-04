@@ -36,6 +36,12 @@ module.exports = function (ctx) {
     var configPath = path.join(wwwpath, "google-services");
 
     fs.readdir(configPath, function(err, files){
+
+        if(err) {
+            deferral.reject(new CordovaError("An error occurred while trying to copy google service configuration file. " + err));
+            return;
+        }
+
         var fileExtension = platform === "android" ? ".json" : platform === "ios" ? ".plist" : undefined;
         var filename = files.find(function(val){
             return val.endsWith(fileExtension);

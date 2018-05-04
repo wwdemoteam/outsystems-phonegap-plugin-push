@@ -1,13 +1,12 @@
-
 module.exports = function (ctx) {
-    var Q = ctx.requireCordovaModule("q");
-    var fs = ctx.requireCordovaModule("fs");
-    var path = ctx.requireCordovaModule("path");
-    var CordovaError = ctx.requireCordovaModule("cordova-common").CordovaError;
-    var deferral = Q.defer();
+  var Q = ctx.requireCordovaModule("q");
+  var fs = ctx.requireCordovaModule("fs");
+  var path = ctx.requireCordovaModule("path");
+  var CordovaError = ctx.requireCordovaModule("cordova-common").CordovaError;
+  var deferral = Q.defer();
 
-    var AdmZip = require("adm-zip");
-    var defer = Q.defer();
+  var AdmZip = require("adm-zip");
+  var defer = Q.defer();
 
 
   // The name of the target directory set on the Service Studio
@@ -54,17 +53,22 @@ module.exports = function (ctx) {
    * 
    */
   function getZipFile(resourcesFolder, prefZipFilename) {
-    var dirFiles = fs.readdirSync(resourcesFolder);
-    var zipFile;
-    dirFiles.forEach(function (file) {
-      if (file.match(/\.zip$/)) {
-        var filename = path.basename(file, ".zip");
-        if (filename === prefZipFilename)  {
-          zipFile = path.join(resourcesFolder, file);
+    try {
+
+      var dirFiles = fs.readdirSync(resourcesFolder);
+      var zipFile;
+      dirFiles.forEach(function (file) {
+        if (file.match(/\.zip$/)) {
+          var filename = path.basename(file, ".zip");
+          if (filename === prefZipFilename)  {
+            zipFile = path.join(resourcesFolder, file);
+          }
         }
-      }
-    });
-    return zipFile;
+      });
+      return zipFile;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   /**
@@ -79,22 +83,22 @@ module.exports = function (ctx) {
     return targetDir;
   }
 
-  
-  function _handleZipFile(context){
-        // Android path: platforms/android/assets/www
+
+  function _handleZipFile(context) {
+    // Android path: platforms/android/assets/www
     // iOS path: platforms/ios/www/
     var projectRoot = ctx.opts.projectRoot;
     var platform = ctx.opts.plugin.platform;
     var platformPath = path.join(projectRoot, "platforms", platform);
     var wwwfolder;
-    if(platform === "android") {
-        wwwfolder = "assets/www";
+    if (platform === "android") {
+      wwwfolder = "assets/www";
     } else if (platform === "ios") {
-        wwwfolder = "www";
+      wwwfolder = "www";
     }
 
-    if(!wwwfolder) {
-        return;
+    if (!wwwfolder) {
+      return;
     }
     var wwwpath = path.join(platformPath, wwwfolder);
     var configPath = path.join(wwwpath, "google-services");
@@ -105,7 +109,9 @@ module.exports = function (ctx) {
 
     // if zip file is present, lets unzip it!
     if (!zipFile)  {
-      console.log("Aborting FCM resources handling. Reason: Resources zip file not found.");
+      // For back compatibility, if the zip file isn't found we allow the rest of the hooks to run
+      // in an attempt to gather the config files from the older way of doing (having them uploaded separately)
+      console.log("Ignoring FCM config resources handling. Reason: Configurations zip file not found.");
       defer.resolve();
       return defer;
     }
@@ -113,11 +119,11 @@ module.exports = function (ctx) {
     var resourcesFolder = getResourcesFolder(ctx);
 
     var unzipedResourcesDir = unzip(zipFile, resourcesFolder, prefZipFilename);
-    
+
     deferral.resolve();
     return deferral.promise;
   }
 
   return _handleZipFile(ctx);
-  
-  };
+
+};

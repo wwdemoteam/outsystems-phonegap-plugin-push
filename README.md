@@ -1,6 +1,12 @@
-# phonegap-plugin-push [![Build Status](https://travis-ci.org/phonegap/phonegap-plugin-push.svg)](https://travis-ci.org/phonegap/phonegap-plugin-push)
+# outsystems-phonegap-plugin-push
 
 > Register and receive push notifications
+
+## OutSystems Notice
+
+This plugin is a clone of the official [Phonegap Push Plugin](https://github.com/phonegap/phonegap-plugin-push/) with additional functionality to work with the OutSystems platform.
+
+This repository contains the code for the cordova plugin that backs up the [Firebase Cloud Message](https://www.outsystems.com/forge/component/2678/firebase-cloud-message-plugin/) OutSystems mobile plugin
 
 # Warning
 

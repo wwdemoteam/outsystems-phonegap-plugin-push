@@ -322,7 +322,7 @@ public final class NotificationHandlerUtil implements PushConstants {
             PushPlugin.setApplicationIconBadgeNumber(context, badgeCount);
         }
         if (badgeCount == 0) {
-            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
             mNotificationManager.cancelAll();
         }
 
@@ -729,7 +729,7 @@ public final class NotificationHandlerUtil implements PushConstants {
         }
     }
 
-    private int getImageId(Resources resources, String icon, String packageName) {
+    private static int getImageId(Resources resources, String icon, String packageName) {
         int iconId = resources.getIdentifier(icon, DRAWABLE, packageName);
         if (iconId == 0) {
           iconId = resources.getIdentifier(icon, "mipmap", packageName);

@@ -1,6 +1,8 @@
 package com.adobe.phonegap.push;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -11,20 +13,25 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.Paint;
+import android.graphics.Canvas;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationCompat.WearableExtender;
 import android.support.v4.app.RemoteInput;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
+
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -37,7 +44,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Random;
+import java.util.List;
+import java.util.Map;
+import java.security.SecureRandom;
 
 /**
  * Created by jppg on 19/09/2017.
@@ -173,8 +182,9 @@ public final class NotificationHandlerUtil implements PushConstants {
     /*
      * Replace alternate keys with our canonical value
      */
-    public static String normalizeKey(String key, String messageKey, String titleKey) {
-        if (key.equals(BODY) || key.equals(ALERT) || key.equals(MP_MESSAGE) || key.equals(GCM_NOTIFICATION_BODY) || key.equals(TWILIO_BODY) || key.equals(messageKey)) {
+    public static String normalizeKey(String key, String messageKey, String titleKey, Bundle newExtras) {
+        if (key.equals(BODY) || key.equals(ALERT) || key.equals(MP_MESSAGE) || key.equals(GCM_NOTIFICATION_BODY) 
+            || key.equals(TWILIO_BODY) || key.equals(messageKey) || key.equals(AWS_PINPOINT_BODY)) {
             return MESSAGE;
         } else if (key.equals(TWILIO_TITLE) || key.equals(SUBJECT) || key.equals(titleKey)) {
             return TITLE;
@@ -182,6 +192,9 @@ public final class NotificationHandlerUtil implements PushConstants {
             return COUNT;
         } else if (key.equals(SOUNDNAME) || key.equals(TWILIO_SOUND)) {
             return SOUND;
+        } else if (key.equals(AWS_PINPOINT_PICTURE)) {
+            newExtras.putString(STYLE, STYLE_PICTURE);
+            return PICTURE;
         } else if (key.startsWith(GCM_NOTIFICATION)) {
             return key.substring(GCM_NOTIFICATION.length() + 1, key.length());
         } else if (key.startsWith(GCM_N)) {
@@ -189,6 +202,8 @@ public final class NotificationHandlerUtil implements PushConstants {
         } else if (key.startsWith(UA_PREFIX)) {
             key = key.substring(UA_PREFIX.length() + 1, key.length());
             return key.toLowerCase();
+        } else if (key.startsWith(AWS_PINPOINT_PREFIX)) {
+            return key.substring(AWS_PINPOINT_PREFIX.length() + 1, key.length());
         } else {
             return key;
         }
@@ -227,17 +242,21 @@ public final class NotificationHandlerUtil implements PushConstants {
                                 Log.d(LOG_TAG, "key = data/" + jsonKey);
 
                                 String value = data.getString(jsonKey);
-                                jsonKey = normalizeKey(jsonKey, messageKey, titleKey);
+                                jsonKey = normalizeKey(jsonKey, messageKey, titleKey, newExtras);
                                 value = localizeKey(context, jsonKey, value);
 
                                 newExtras.putString(jsonKey, value);
                             }
+                        } else if (data.has(LOC_KEY) || data.has(LOC_DATA)) {
+                            String newKey = normalizeKey(key, messageKey, titleKey, newExtras);
+                            Log.d(LOG_TAG, "replace key " + key + " with " + newKey);
+                            replaceKey(context, key, newKey, extras, newExtras);
                         }
                     } catch (JSONException e) {
                         Log.e(LOG_TAG, "normalizeExtras: JSON exception");
                     }
                 } else {
-                    String newKey = normalizeKey(key, messageKey, titleKey);
+                    String newKey = normalizeKey(key, messageKey, titleKey, newExtras);
                     Log.d(LOG_TAG, "replace key " + key + " with " + newKey);
                     replaceKey(context, key, newKey, extras, newExtras);
                 }
@@ -248,7 +267,7 @@ public final class NotificationHandlerUtil implements PushConstants {
                     String notifkey = iterator.next();
 
                     Log.d(LOG_TAG, "notifkey = " + notifkey);
-                    String newKey = normalizeKey(notifkey, messageKey, titleKey);
+                    String newKey = normalizeKey(notifkey, messageKey, titleKey, newExtras);
                     Log.d(LOG_TAG, "replace key " + notifkey + " with " + newKey);
 
                     String valueData = value.getString(notifkey);
@@ -263,7 +282,7 @@ public final class NotificationHandlerUtil implements PushConstants {
                 // with the other "message" key (holding the body of the payload)
                 // See issue #1663
             } else {
-                String newKey = normalizeKey(key, messageKey, titleKey);
+                String newKey = normalizeKey(key, messageKey, titleKey, newExtras);
                 Log.d(LOG_TAG, "replace key " + key + " with " + newKey);
                 replaceKey(context, key, newKey, extras, newExtras);
             }
@@ -301,6 +320,10 @@ public final class NotificationHandlerUtil implements PushConstants {
         if (badgeCount >= 0) {
             Log.d(LOG_TAG, "count =[" + badgeCount + "]");
             PushPlugin.setApplicationIconBadgeNumber(context, badgeCount);
+        }
+        if (badgeCount == 0) {
+            NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancelAll();
         }
 
         Log.d(LOG_TAG, "message =[" + message + "]");
@@ -347,7 +370,8 @@ public final class NotificationHandlerUtil implements PushConstants {
         notificationIntent.putExtra(PUSH_BUNDLE, extras);
         notificationIntent.putExtra(NOT_ID, notId);
 
-        int requestCode = new Random().nextInt();
+        SecureRandom random = new SecureRandom();
+        int requestCode = random.nextInt();
         PendingIntent contentIntent = PendingIntent.getActivity(context, requestCode, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Intent dismissedNotificationIntent = new Intent(context, PushDismissedHandler.class);
@@ -359,14 +383,33 @@ public final class NotificationHandlerUtil implements PushConstants {
         requestCode = new Random().nextInt();
         PendingIntent deleteIntent = PendingIntent.getBroadcast(context, requestCode, dismissedNotificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        NotificationCompat.Builder mBuilder =
-                new NotificationCompat.Builder(context)
-                        .setWhen(System.currentTimeMillis())
-                        .setContentTitle(fromHtml(extras.getString(TITLE)))
-                        .setTicker(fromHtml(extras.getString(TITLE)))
-                        .setContentIntent(contentIntent)
-                        .setDeleteIntent(deleteIntent)
-                        .setAutoCancel(true);
+        NotificationCompat.Builder mBuilder = null;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        String channelID = extras.getString(ANDROID_CHANNEL_ID);
+
+        // if the push payload specifies a channel use it
+        if (channelID != null) {
+            mBuilder = new NotificationCompat.Builder(context, channelID);
+        } else {
+            List<NotificationChannel> channels = mNotificationManager.getNotificationChannels();
+
+            if (channels.size() == 1) {
+            channelID = channels.get(0).getId();
+            } else {
+            channelID = extras.getString(ANDROID_CHANNEL_ID, DEFAULT_CHANNEL_ID);
+            }
+            Log.d(LOG_TAG, "Using channel ID = " + channelID);
+            mBuilder = new NotificationCompat.Builder(context, channelID);
+        }
+
+        } else {
+        mBuilder = new NotificationCompat.Builder(context);
+        }
+
+        mBuilder.setWhen(System.currentTimeMillis()).setContentTitle(fromHtml(extras.getString(TITLE)))
+            .setTicker(fromHtml(extras.getString(TITLE))).setContentIntent(contentIntent).setDeleteIntent(deleteIntent)
+            .setAutoCancel(true);
 
         SharedPreferences prefs = context.getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH, Context.MODE_PRIVATE);
         String localIcon = prefs.getString(ICON, null);
@@ -391,7 +434,7 @@ public final class NotificationHandlerUtil implements PushConstants {
          * To use, add the `iconColor` key to plugin android options
          *
          */
-        setNotificationIconColor(extras.getString("color"), mBuilder, localIconColor);
+        setNotificationIconColor(extras.getString(COLOR), mBuilder, localIconColor);
 
         /*
          * Notification Icon
@@ -449,6 +492,11 @@ public final class NotificationHandlerUtil implements PushConstants {
         setNotificationCount(context, extras, mBuilder);
 
         /*
+        *  Notification ongoing
+        */
+        setNotificationOngoing(extras, mBuilder);
+
+        /*
          * Notification count
          */
         setVisibility(context, extras, mBuilder);
@@ -479,6 +527,12 @@ public final class NotificationHandlerUtil implements PushConstants {
             }
         }
     }
+
+    private static void setNotificationOngoing(Bundle extras, NotificationCompat.Builder mBuilder) {
+        boolean ongoing = Boolean.parseBoolean(extras.getString(ONGOING, "false"));
+        mBuilder.setOngoing(ongoing);
+    }
+    
 
     private static void setNotificationMessage(int notId, Bundle extras, NotificationCompat.Builder mBuilder) {
         String message = extras.getString(MESSAGE);
@@ -662,7 +716,7 @@ public final class NotificationHandlerUtil implements PushConstants {
                     Log.d(LOG_TAG, "using assets large-icon from gcm");
                 } catch (IOException e) {
                     int largeIconId = 0;
-                    largeIconId = resources.getIdentifier(gcmLargeIcon, DRAWABLE, packageName);
+                    largeIconId = getImageId(resources, gcmLargeIcon, packageName);
                     if (largeIconId != 0) {
                         Bitmap largeIconBitmap = BitmapFactory.decodeResource(resources, largeIconId);
                         mBuilder.setLargeIcon(largeIconBitmap);
@@ -675,14 +729,22 @@ public final class NotificationHandlerUtil implements PushConstants {
         }
     }
 
+    private int getImageId(Resources resources, String icon, String packageName) {
+        int iconId = resources.getIdentifier(icon, DRAWABLE, packageName);
+        if (iconId == 0) {
+          iconId = resources.getIdentifier(icon, "mipmap", packageName);
+        }
+        return iconId;
+      }
+
     private static void setNotificationSmallIcon(Context context, Bundle extras, String packageName, Resources resources, NotificationCompat.Builder mBuilder, String localIcon) {
         int iconId = 0;
         String icon = extras.getString(ICON);
         if (icon != null && !"".equals(icon)) {
-            iconId = resources.getIdentifier(icon, DRAWABLE, packageName);
+            iconId =  getImageId(resources, icon, packageName);
             Log.d(LOG_TAG, "using icon from plugin options");
         } else if (localIcon != null && !"".equals(localIcon)) {
-            iconId = resources.getIdentifier(localIcon, DRAWABLE, packageName);
+            iconId = getImageId(resources, localIcon, packageName);
             Log.d(LOG_TAG, "using icon from plugin options");
         }
         if (iconId == 0) {
@@ -722,7 +784,7 @@ public final class NotificationHandlerUtil implements PushConstants {
                 for (int i = 0; i < actionsArray.length(); i++) {
                     int min = 1;
                     int max = 2000000000;
-                    Random random = new Random();
+                    SecureRandom random = new SecureRandom();
                     int uniquePendingIntentRequestCode = random.nextInt((max - min) + 1) + min;
                     Log.d(LOG_TAG, "adding action");
                     JSONObject action = actionsArray.getJSONObject(i);
@@ -761,13 +823,12 @@ public final class NotificationHandlerUtil implements PushConstants {
                     }
 
                     NotificationCompat.Action.Builder actionBuilder =
-                            new NotificationCompat.Action.Builder(resources.getIdentifier(action.optString(ICON, ""), DRAWABLE, packageName),
-                                    action.getString(TITLE), pIntent);
+                            new NotificationCompat.Action.Builder(getImageId(resources, action.optString(ICON, ""), packageName), action.getString(TITLE), pIntent);
 
                     RemoteInput remoteInput = null;
                     if (inline) {
                         Log.d(LOG_TAG, "create remote input");
-                        String replyLabel = "Enter your reply here";
+                        String replyLabel = action.optString(INLINE_REPLY_LABEL, "Enter your reply here");
                         remoteInput =
                                 new RemoteInput.Builder(INLINE_REPLY)
                                         .setLabel(replyLabel)
@@ -781,8 +842,8 @@ public final class NotificationHandlerUtil implements PushConstants {
                     if (inline) {
                         mBuilder.addAction(wAction);
                     } else {
-                        mBuilder.addAction(resources.getIdentifier(action.optString(ICON, ""), DRAWABLE, packageName),
-                                action.getString(TITLE), pIntent);
+                        mBuilder.addAction(getImageId(resources, action.optString(ICON, ""), packageName), 
+                                            action.getString(TITLE), pIntent);
                     }
                     wAction = null;
                     pIntent = null;
@@ -872,6 +933,8 @@ public final class NotificationHandlerUtil implements PushConstants {
     public static boolean isAvailableSender(Context context, String from) {
         SharedPreferences sharedPref = context.getSharedPreferences(PushPlugin.COM_ADOBE_PHONEGAP_PUSH, Context.MODE_PRIVATE);
         String savedSenderID = sharedPref.getString(SENDER_ID, "");
+
+        Log.d(LOG_TAG, "sender id = " + savedSenderID);
 
         return from.equals(savedSenderID) || from.startsWith("/topics/");
     }

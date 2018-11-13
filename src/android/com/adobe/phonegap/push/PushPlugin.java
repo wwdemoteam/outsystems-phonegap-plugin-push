@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.media.AudioAttributes;
@@ -18,7 +19,6 @@ import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.sun.nio.sctp.NotificationHandler;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;

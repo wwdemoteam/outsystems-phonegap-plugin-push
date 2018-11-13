@@ -380,7 +380,7 @@ public final class NotificationHandlerUtil implements PushConstants {
         dismissedNotificationIntent.putExtra(DISMISSED, true);
         dismissedNotificationIntent.setAction(PUSH_DISMISSED);
 
-        requestCode = new Random().nextInt();
+        requestCode = new SecureRandom().nextInt();
         PendingIntent deleteIntent = PendingIntent.getBroadcast(context, requestCode, dismissedNotificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder mBuilder = null;

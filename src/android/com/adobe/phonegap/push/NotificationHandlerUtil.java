@@ -794,7 +794,7 @@ public final class NotificationHandlerUtil implements PushConstants {
                     Intent intent = null;
                     PendingIntent pIntent = null;
                     if (inline) {
-                        Log.d(LOG_TAG, "Version: " + android.os.Build.VERSION.SDK_INT + " = " + android.os.Build.VERSION_CODES.M);
+                        /*Log.d(LOG_TAG, "Version: " + android.os.Build.VERSION.SDK_INT + " = " + android.os.Build.VERSION_CODES.M);
                         if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.M) {
                             Log.d(LOG_TAG, "push activity");
                             intent = new Intent(context, PushHandlerActivity.class);
@@ -811,7 +811,12 @@ public final class NotificationHandlerUtil implements PushConstants {
                         } else {
                             Log.d(LOG_TAG, "push receiver for notId " + notId);
                             pIntent = PendingIntent.getBroadcast(context, uniquePendingIntentRequestCode, intent, PendingIntent.FLAG_ONE_SHOT);
-                        }
+                        }*/
+
+
+                        intent = new Intent(context, PushHandlerActivity.class);
+                        updateIntent(intent, action.getString(CALLBACK), extras, true, notId);
+                        pIntent = PendingIntent.getActivity(context, uniquePendingIntentRequestCode, intent, PendingIntent.FLAG_ONE_SHOT);
                     } else if (foreground) {
                         intent = new Intent(context, PushHandlerActivity.class);
                         updateIntent(intent, action.getString(CALLBACK), extras, foreground, notId);

@@ -23,9 +23,11 @@
  ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import <Foundation/Foundation.h>
+@import Foundation;
+@import UserNotifications;
 #import <Cordova/CDV.h>
 #import <Cordova/CDVPlugin.h>
+#import <PushKit/PushKit.h>
 
 @protocol GGLInstanceIDDelegate;
 @protocol GCMReceiverDelegate;
@@ -57,6 +59,7 @@
 - (void)unregister:(CDVInvokedUrlCommand*)command;
 - (void)subscribe:(CDVInvokedUrlCommand*)command;
 - (void)unsubscribe:(CDVInvokedUrlCommand*)command;
+- (void)clearNotification:(CDVInvokedUrlCommand*)command;
 
 - (void)didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken;
 - (void)didFailToRegisterForRemoteNotificationsWithError:(NSError *)error;
@@ -67,6 +70,10 @@
 - (void)willSendDataMessageWithID:(NSString *)messageID error:(NSError *)error;
 - (void)didSendDataMessageWithID:(NSString *)messageID;
 - (void)didDeleteMessagesOnServer;
+
+// VoIP Features
+- (void)pushRegistry:(PKPushRegistry *)registry didUpdatePushCredentials:(PKPushCredentials *)credentials forType:(NSString *)type;
+- (void)pushRegistry:(PKPushRegistry *)registry didReceiveIncomingPushWithPayload:(PKPushPayload *)payload forType:(NSString *)type;
 
 // FCM Features
 @property(nonatomic, assign) BOOL usesFCM;

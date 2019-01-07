@@ -70,6 +70,7 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
         JSONObject channel = new JSONObject();
         channel.put(CHANNEL_ID, notificationChannel.getId());
         channel.put(CHANNEL_DESCRIPTION, notificationChannel.getDescription());
+        channel.put(CHANNEL_IMPORTANCE, notificationChannel.getImportance());
         channels.put(channel);
       }
     }

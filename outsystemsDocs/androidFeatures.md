@@ -4,7 +4,12 @@ Android offers additional features such as support for rich notifications and no
 In order to leverage those features, a specific set of payloads must be used when pushing notifications to the devices.
 
 ## Channels
------------ Describe the android Groups functionality -----------
+From Android 8.0 (API level 26) and higher, notification channels are supported and recommended.
+You can create notification channels for your app using the CreateChannel client action. <details><summary>Open Image</summary><img src="imgs/channels.png"/></details><br>
+Channels created this way can be seen in the notification properties of your application
+ <details><summary>Example: </summary>In this example there are 2 channels created with the same name 'Miscelaneous' that have distinct behaviors. They both lie under the channel group named 'Categories' <img src="imgs/channelsOptions.png"/></details><br>
+
+[More information ](https://firebase.google.com/docs/cloud-messaging/android/client) about android channels
 
 ## Stacking
 By default, every time a notification is received on Android devices, the notification present on the notification tray will be replaced with the most recent notification. To have one different notifications on the notification tray make sure to provide a notification id when sending a notification. When sending a notification, provide a custom data entry with the key “notId” and an integer value that identifies the notification.<details><summary>Open Image</summary><img src="imgs/image6.png"/></details><br>

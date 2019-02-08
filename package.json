@@ -25,11 +25,11 @@
   "engines": [
     {
       "name": "cordova",
-      "version": ">=6.5.0"
+      "version": ">=7.1.0"
     },
     {
       "name": "cordova-android",
-      "version": ">=6.1.2"
+      "version": ">=6.4.0"
     },
     {
       "name": "cordova-ios",

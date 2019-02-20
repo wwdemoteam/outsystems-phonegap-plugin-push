@@ -219,6 +219,12 @@
                 authorizationOptions |= UNAuthorizationOptionAlert;
             }
 
+            if (@available(iOS 12.0, *)) {
+                if (authorizationOptions == 0 ) {
+                    authorizationOptions |= UNAuthorizationOptionProvisional;
+                }
+            }
+
             if (clearBadgeArg == nil || ([clearBadgeArg isKindOfClass:[NSString class]] && [clearBadgeArg isEqualToString:@"false"]) || ![clearBadgeArg boolValue]) {
                 NSLog(@"PushPlugin.register: setting badge to false");
                 clearBadge = NO;

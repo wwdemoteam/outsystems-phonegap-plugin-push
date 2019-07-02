@@ -53,7 +53,7 @@
     <framework src="me.leolin:ShortcutBadger:1.1.17@aar"/>
     <framework src="com.google.firebase:firebase-messaging:$FCM_VERSION"/>
     <dependency id="cordova-support-google-services" version="~1.2.0"/>
-    <dependency id="me.tonny.cordova.plugins.multidex" url="https://github.com/jwall149/cordova-multidex"/>
+    <dependency id="phonegap-plugin-multidex" version="~1.0.0"/>
 
     <source-file src="src/android/com/adobe/phonegap/push/FCMService.java" target-dir="src/com/adobe/phonegap/push/"/>
     <source-file src="src/android/com/adobe/phonegap/push/PushConstants.java" target-dir="src/com/adobe/phonegap/push/"/>

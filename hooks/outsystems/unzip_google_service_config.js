@@ -27,13 +27,8 @@ module.exports = function (ctx) {
   function getResourcesFolder(context) {
     var platform = context.opts.plugin.platform;
     var projectRoot = context.opts.projectRoot;
-    var platformPath = path.join(projectRoot, "platforms", platform);
-    var wwwfolder;
-    if (platform === "android") {
-      wwwfolder = "assets/www";
-    } else if (platform === "ios") {
-      wwwfolder = "www";
-    }
+    var platformPath = projectRoot;
+    var wwwfolder = "www";
 
     if (!wwwfolder) {
       return;
@@ -89,13 +84,9 @@ module.exports = function (ctx) {
     // iOS path: platforms/ios/www/
     var projectRoot = ctx.opts.projectRoot;
     var platform = ctx.opts.plugin.platform;
-    var platformPath = path.join(projectRoot, "platforms", platform);
-    var wwwfolder;
-    if (platform === "android") {
-      wwwfolder = "assets/www";
-    } else if (platform === "ios") {
-      wwwfolder = "www";
-    }
+    var platformPath = projectRoot;
+    var wwwfolder = "www";
+    
 
     if (!wwwfolder) {
       return;

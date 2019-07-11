@@ -21,17 +21,13 @@ module.exports = function (ctx) {
     // iOS path: platforms/ios/www/
     var projectRoot = ctx.opts.projectRoot;
     var platform = ctx.opts.plugin.platform;
-    var platformPath = path.join(projectRoot, "platforms", platform);
-    var wwwfolder;
-    if(platform === "android") {
-        wwwfolder = "assets/www";
-    } else if (platform === "ios") {
-        wwwfolder = "www";
-    }
-
+    var platformPath = projectRoot;
+  
+    var wwwfolder = "www";
     if(!wwwfolder) {
         return;
     }
+  
     var wwwpath = path.join(platformPath, wwwfolder);
     var configPath = path.join(wwwpath, "google-services");
 

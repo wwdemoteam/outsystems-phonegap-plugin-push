@@ -70,4 +70,50 @@
     -->
     <resource-file src="google-services.json" target="../../google-services.json" />  
     </platform>
+    <platform name="browser">
+    <js-module src="www/browser/push.js" name="BrowserPush">
+      <clobbers target="PushNotification"/>
+    </js-module>
+    <asset src="src/browser/ServiceWorker.js" target="ServiceWorker.js"/>
+    <asset src="src/browser/manifest.json" target="manifest.json"/>
+  <hook type="after_prepare" src="hooks/browser/updateManifest.js"/>
+  </platform>
+  <platform name="ios">
+    <config-file target="config.xml" parent="/*">
+      <feature name="PushNotification">
+        <param name="ios-package" value="PushPlugin"/>
+      </feature>
+    </config-file>
+    <config-file target="*-Info.plist" parent="UIBackgroundModes">
+      <array>
+        <string>remote-notification</string>
+      </array>
+    </config-file>
+    <config-file target="*-Debug.plist" parent="aps-environment">
+      <string>development</string>
+    </config-file>
+    <config-file target="*-Release.plist" parent="aps-environment">
+      <string>production</string>
+    </config-file>
+    <source-file src="src/ios/AppDelegate+notification.m"/>
+    <source-file src="src/ios/PushPlugin.m"/>
+    <header-file src="src/ios/AppDelegate+notification.h"/>
+    <header-file src="src/ios/PushPlugin.h"/>
+    <framework src="FirebaseMessaging" type="podspec" spec="~> 2.0.0"/>
+    <framework src="PushKit.framework"/>
+    <!--
+    Depends on the resource to be uploaded to "google-services" folder inside Service Studio.
+    copyGoogleServiceConfig hook is in charge to copy from the source directory to the root of the plugin folder.
+    -->
+    <resource-file src="GoogleService-Info.plist" target="./GoogleService-Info.plist" />  
+  </platform>
+  <platform name="windows">
+    <hook type="after_plugin_install" src="hooks/windows/setToastCapable.js"/>
+    <js-module src="src/windows/PushPluginProxy.js" name="PushPlugin">
+      <runs/>
+    </js-module>
+    <config-file target="config.xml" parent="/*">
+      <preference name="WindowsToastCapable" value="true"/>
+    </config-file>
+  </platform>
 </plugin>

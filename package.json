@@ -41,5 +41,8 @@
   "bugs": {
     "url": "https://github.com/OutSystemsExperts/outsystems-phonegap-plugin-push/issues"
   },
-  "homepage": "https://github.com/OutSystemsExperts/outsystems-phonegap-plugin-push#readme"
+  "homepage": "https://github.com/OutSystemsExperts/outsystems-phonegap-plugin-push#readme",
+  "dependencies": {
+    "shelljs": "^0.8.3"
+  }
 }

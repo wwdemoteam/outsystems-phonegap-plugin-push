@@ -11,10 +11,10 @@
  *
  */
 module.exports = function (ctx) {
-    var Q = ctx.requireCordovaModule("q");
-    var fs = ctx.requireCordovaModule("fs");
-    var path = ctx.requireCordovaModule("path");
-    var CordovaError = ctx.requireCordovaModule("cordova-common").CordovaError;
+    var Q = require("q");
+    var fs = require("fs");
+    var path = require("path");
+    var CordovaError = require("cordova-common").CordovaError;
     var deferral = Q.defer();
     
     // Android path: platforms/android/assets/www

@@ -11,14 +11,30 @@
  *
  */
 
+var utils = require('./utilities');
+
 module.exports = function (ctx) {
-  var Q = require("q"),
-    fs = require("fs"),
-    path = require("path"),
-    shell = require('shelljs'),
-    CordovaError = require("cordova-common").CordovaError,
-    ConfigParser = require("cordova-common").ConfigParser,
-    child_process = require('child_process');
+  
+    if (cordovaAbove8) {
+      var Q = require("q"),
+      fs = require("fs"),
+      path = require("path"),
+      shell = require('shelljs'),
+      CordovaError = require("cordova-common").CordovaError,
+      ConfigParser = require("cordova-common").ConfigParser,
+      child_process = require('child_process');
+      
+    } else {
+      var Q = ctx.requireCordovaModule("q"),
+      fs = ctx.requireCordovaModule("fs"),
+      path = ctx.requireCordovaModule("path"),
+      shell = ctx.requireCordovaModule('shelljs'),
+      CordovaError = ctx.requireCordovaModule("cordova-common").CordovaError,
+      ConfigParser = ctx.requireCordovaModule("cordova-common").ConfigParser,
+      child_process = ctx.requireCordovaModule('child_process');
+    }
+  
+
 
   var AdmZip = require("adm-zip");
 

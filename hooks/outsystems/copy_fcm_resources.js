@@ -14,7 +14,7 @@
 var utils = require('./utilities');
 
 module.exports = function (ctx) {
-    var cordovaAbove8 = utils.isCordovaAbove(context, 8);
+    var cordovaAbove8 = utils.isCordovaAbove(ctx, 8);
   
     if (cordovaAbove8) {
       var Q = require("q"),
